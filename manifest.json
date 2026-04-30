@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YT Speed+",
+  "name": "YT Playback Speed Controller",
   "version": "1.0.0",
-  "description": "Fine-grained YouTube speed control injected directly into the player bar.",
+  "description": "Fine-grained YouTube playback speed control with a slider, presets, and keyboard shortcuts — injected natively into the player.",
   "permissions": [],
   "content_scripts": [
     {
