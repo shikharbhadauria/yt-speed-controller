@@ -2,7 +2,7 @@
     "use strict";
 
     // ─── Config ────────────────────────────────────────────────────────────────
-    const PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4];
+    const PRESETS = [0.5, 1, 1.25, 1.5, 2, 3];
     const NUDGE = 0.25;
     const SLIDER_STEP = 0.05;
     const TRIGGER_ID = "ytsp-trigger";
