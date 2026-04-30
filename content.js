@@ -67,99 +67,122 @@
         const popup = document.createElement("div");
         popup.id = POPUP_ID;
 
-        // ── Header
+        // ── Our header (not in YouTube's DOM — needed for standalone popup)
         const header = document.createElement("div");
         header.className = "ytsp-header";
-
-        const backBtn = document.createElement("button");
-        backBtn.className = "ytsp-back";
-        backBtn.setAttribute("aria-label", "Close");
-        backBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>`;
-        backBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            closePopup();
-        });
 
         const title = document.createElement("span");
         title.className = "ytsp-title";
         title.textContent = "Playback Speed";
 
-        header.appendChild(backBtn);
         header.appendChild(title);
 
-        // ── Speed display
-        const display = document.createElement("div");
-        display.className = "ytsp-display";
-        display.textContent = fmt(currentSpeed);
+        // ── YouTube's exact panel structure — styled by YouTube's own stylesheet
+        const content = document.createElement("div");
+        content.className = "ytp-variable-speed-panel-content";
 
-        // ── Slider row
-        const sliderRow = document.createElement("div");
-        sliderRow.className = "ytsp-slider-row";
+        // Speed display
+        const displayContainer = document.createElement("div");
+        displayContainer.className = "ytp-speed-display-container";
+        const displayInner = document.createElement("div");
+        displayInner.className = "ytp-variable-speed-panel-display";
+        displayInner.setAttribute("aria-live", "polite");
+        const displaySpan = document.createElement("span");
+        displaySpan.textContent = fmt(currentSpeed);
+        displayInner.appendChild(displaySpan);
+        displayContainer.appendChild(displayInner);
+
+        // Slider container
+        const sliderContainer = document.createElement("div");
+        sliderContainer.className = "ytp-variable-speed-panel-slider-container";
 
         const minusBtn = document.createElement("button");
-        minusBtn.className = "ytsp-step-btn";
-        minusBtn.textContent = "−";
+        minusBtn.className =
+            "ytp-button ytp-variable-speed-panel-button ytp-variable-speed-panel-increment-button";
+        minusBtn.setAttribute("aria-label", "Decrease playback speed 0.05");
+        minusBtn.innerHTML = "<span>-</span>";
         minusBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             setSpeed(currentSpeed - SLIDER_STEP);
         });
 
+        const sliderSection = document.createElement("div");
+        sliderSection.className = "ytp-input-slider-section";
+
         const slider = document.createElement("input");
+        slider.className =
+            "ytp-input-slider ytp-speedslider ytp-varispeed-input-slider";
         slider.type = "range";
-        slider.className = "ytsp-slider";
+        slider.setAttribute("role", "slider");
         slider.min = "0.25";
         slider.max = "4";
         slider.step = String(SLIDER_STEP);
         slider.value = String(Math.min(4, Math.max(0.25, currentSpeed)));
+        slider.setAttribute("aria-valuemin", "0.25");
+        slider.setAttribute("aria-valuemax", "4");
+        slider.setAttribute("aria-valuenow", String(currentSpeed));
         slider.addEventListener("input", (e) => {
             e.stopPropagation();
             setSpeed(parseFloat(e.target.value));
         });
 
+        sliderSection.appendChild(slider);
+
         const plusBtn = document.createElement("button");
-        plusBtn.className = "ytsp-step-btn";
-        plusBtn.textContent = "+";
+        plusBtn.className =
+            "ytp-button ytp-variable-speed-panel-button ytp-variable-speed-panel-increment-button";
+        plusBtn.setAttribute("aria-label", "Increase playback speed 0.05");
+        plusBtn.innerHTML = "<span>+</span>";
         plusBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             setSpeed(currentSpeed + SLIDER_STEP);
         });
 
-        sliderRow.appendChild(minusBtn);
-        sliderRow.appendChild(slider);
-        sliderRow.appendChild(plusBtn);
+        sliderContainer.appendChild(minusBtn);
+        sliderContainer.appendChild(sliderSection);
+        sliderContainer.appendChild(plusBtn);
 
-        // ── Preset pills
-        const presets = document.createElement("div");
-        presets.className = "ytsp-presets";
+        // Chips (presets) — matches ytp-variable-speed-panel-chips structure
+        const chips = document.createElement("div");
+        chips.className = "ytp-variable-speed-panel-chips";
 
         PRESETS.forEach((s) => {
-            const wrap = document.createElement("div");
-            wrap.className = "ytsp-preset-wrap";
+            const wrapper = document.createElement("div");
+            wrapper.className =
+                "ytp-variable-speed-panel-preset-button-wrapper";
 
             const btn = document.createElement("button");
-            btn.className = "ytsp-preset" + (s === currentSpeed ? " ytsp-active" : "");
+            btn.className =
+                "ytp-button ytp-variable-speed-panel-preset-button ytp-variable-speed-panel-button" +
+                (s === currentSpeed ? " ytsp-active" : "");
             btn.dataset.speed = s;
-            btn.textContent = s === 1 ? "1.0" : String(s);
+            const span = document.createElement("span");
+            span.textContent = s === 1 ? "1.0" : String(s);
+            btn.appendChild(span);
             btn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 setSpeed(s);
             });
-            wrap.appendChild(btn);
+
+            wrapper.appendChild(btn);
 
             if (s === 1) {
-                const sub = document.createElement("div");
-                sub.className = "ytsp-sublabel";
-                sub.textContent = "Normal";
-                wrap.appendChild(sub);
+                const label = document.createElement("div");
+                label.className =
+                    "ytp-variable-speed-panel-preset-button-label-text";
+                label.textContent = "Normal";
+                wrapper.appendChild(label);
             }
 
-            presets.appendChild(wrap);
+            chips.appendChild(wrapper);
         });
 
+        content.appendChild(displayContainer);
+        content.appendChild(sliderContainer);
+        content.appendChild(chips);
+
         popup.appendChild(header);
-        popup.appendChild(display);
-        popup.appendChild(sliderRow);
-        popup.appendChild(presets);
+        popup.appendChild(content);
         return popup;
     }
 
@@ -170,7 +193,11 @@
         const pct =
             ((Math.min(max, Math.max(min, currentSpeed)) - min) / (max - min)) *
             100;
-        slider.style.background = `linear-gradient(to right,#ff4444 ${pct}%,rgba(255,255,255,0.2) ${pct}%)`;
+        // YouTube reads --yt-slider-shape-gradient-percent to drive the fill gradient
+        slider.style.setProperty(
+            "--yt-slider-shape-gradient-percent",
+            pct + "%",
+        );
     }
 
     // ─── Popup open / close ────────────────────────────────────────────────────
@@ -186,7 +213,7 @@
         popup.classList.add("ytsp-open");
 
         // Sync slider fill on open
-        const slider = popup.querySelector(".ytsp-slider");
+        const slider = popup.querySelector(".ytp-speedslider");
         if (slider) updateSliderFill(slider);
 
         setTimeout(() => {
@@ -224,18 +251,23 @@
         if (badge) badge.textContent = fmt(currentSpeed);
 
         const display = document.querySelector(
-            "#" + POPUP_ID + " .ytsp-display",
+            "#" + POPUP_ID + " .ytp-variable-speed-panel-display span",
         );
         if (display) display.textContent = fmt(currentSpeed);
 
-        const slider = document.querySelector("#" + POPUP_ID + " .ytsp-slider");
+        const slider = document.querySelector(
+            "#" + POPUP_ID + " .ytp-speedslider",
+        );
         if (slider) {
             slider.value = String(Math.min(4, Math.max(0.25, currentSpeed)));
+            slider.setAttribute("aria-valuenow", String(currentSpeed));
             updateSliderFill(slider);
         }
 
         document
-            .querySelectorAll("#" + POPUP_ID + " .ytsp-preset")
+            .querySelectorAll(
+                "#" + POPUP_ID + " .ytp-variable-speed-panel-preset-button",
+            )
             .forEach((btn) => {
                 btn.classList.toggle(
                     "ytsp-active",
