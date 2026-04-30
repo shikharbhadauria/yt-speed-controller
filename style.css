@@ -1,13 +1,12 @@
 /* ── YT Speed+ ─────────────────────────────────────────────────────────────── */
 
-/* Trigger button — force flex centering for the speed text */
+/* ── Trigger button ─────────────────────────────────────────────────────────── */
 #ytsp-trigger {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
-/* Speed label inside the trigger button */
 .ytsp-badge {
     font-size: 14px;
     font-weight: 700;
@@ -16,17 +15,149 @@
     line-height: 1;
 }
 
-/* Popup — fixed so no parent overflow can clip it */
+/* ── Popup container ────────────────────────────────────────────────────────── */
 #ytsp-popup {
     display: none;
     position: fixed;
     z-index: 2147483647;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 12px;
-    padding: 6px 0;
-    min-width: 110px;
+    width: 272px;
+    background: rgba(30, 30, 30, 0.97);
+    border-radius: 16px;
+    padding: 16px 16px 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    font-family: "YouTube Sans", Roboto, sans-serif;
+    color: #fff;
 }
 
 #ytsp-popup.ytsp-open {
     display: block;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+.ytsp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.ytsp-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.ytsp-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 50%;
+    line-height: 1;
+}
+
+.ytsp-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* ── Speed display ──────────────────────────────────────────────────────────── */
+.ytsp-display {
+    text-align: center;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+}
+
+/* ── Slider row ─────────────────────────────────────────────────────────────── */
+.ytsp-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.ytsp-step-btn {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.ytsp-step-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.ytsp-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ytsp-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Preset pills ───────────────────────────────────────────────────────────── */
+.ytsp-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    justify-content: center;
+}
+
+.ytsp-preset {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.3;
+    min-width: 44px;
+}
+
+.ytsp-preset:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.ytsp-preset.ytsp-active {
+    background: rgba(255, 255, 255, 0.88);
+    color: #0f0f0f;
+}
+
+.ytsp-preset small {
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.65;
+    margin-top: 1px;
 }
