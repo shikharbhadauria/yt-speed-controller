@@ -24,7 +24,7 @@
     }
 
     function fmt(s) {
-        return parseFloat(s.toFixed(2)) + "x";
+        return s.toFixed(2) + "x";
     }
 
     // ─── Speed control ─────────────────────────────────────────────────────────
@@ -47,8 +47,8 @@
         const btn = document.createElement("button");
         btn.id = TRIGGER_ID;
         btn.className = "ytp-button";
-        btn.title = "Playback speed";
-        btn.setAttribute("aria-label", "Playback speed");
+        btn.title = "Playback Speed";
+        btn.setAttribute("aria-label", "Playback Speed");
 
         const badge = document.createElement("span");
         badge.className = "ytsp-badge";
@@ -71,20 +71,21 @@
         const header = document.createElement("div");
         header.className = "ytsp-header";
 
-        const title = document.createElement("span");
-        title.className = "ytsp-title";
-        title.textContent = "Playback speed";
-
-        const closeBtn = document.createElement("button");
-        closeBtn.className = "ytsp-close";
-        closeBtn.textContent = "✕";
-        closeBtn.addEventListener("click", (e) => {
+        const backBtn = document.createElement("button");
+        backBtn.className = "ytsp-back";
+        backBtn.setAttribute("aria-label", "Close");
+        backBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>`;
+        backBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             closePopup();
         });
 
+        const title = document.createElement("span");
+        title.className = "ytsp-title";
+        title.textContent = "Playback Speed";
+
+        header.appendChild(backBtn);
         header.appendChild(title);
-        header.appendChild(closeBtn);
 
         // ── Speed display
         const display = document.createElement("div");
@@ -132,26 +133,27 @@
         presets.className = "ytsp-presets";
 
         PRESETS.forEach((s) => {
+            const wrap = document.createElement("div");
+            wrap.className = "ytsp-preset-wrap";
+
             const btn = document.createElement("button");
             btn.className = "ytsp-preset" + (s === currentSpeed ? " ytsp-active" : "");
             btn.dataset.speed = s;
-
-            const top = document.createElement("span");
-            top.textContent = s === 1 ? "1.0" : String(s);
-            btn.appendChild(top);
-
-            if (s === 1) {
-                const sub = document.createElement("small");
-                sub.textContent = "Normal";
-                btn.appendChild(sub);
-            }
-
+            btn.textContent = s === 1 ? "1.0" : String(s);
             btn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 setSpeed(s);
             });
+            wrap.appendChild(btn);
 
-            presets.appendChild(btn);
+            if (s === 1) {
+                const sub = document.createElement("div");
+                sub.className = "ytsp-sublabel";
+                sub.textContent = "Normal";
+                wrap.appendChild(sub);
+            }
+
+            presets.appendChild(wrap);
         });
 
         popup.appendChild(header);
@@ -165,7 +167,9 @@
     function updateSliderFill(slider) {
         const min = parseFloat(slider.min);
         const max = parseFloat(slider.max);
-        const pct = ((Math.min(max, Math.max(min, currentSpeed)) - min) / (max - min)) * 100;
+        const pct =
+            ((Math.min(max, Math.max(min, currentSpeed)) - min) / (max - min)) *
+            100;
         slider.style.background = `linear-gradient(to right,#ff4444 ${pct}%,rgba(255,255,255,0.2) ${pct}%)`;
     }
 
@@ -186,13 +190,17 @@
         if (slider) updateSliderFill(slider);
 
         setTimeout(() => {
-            document.addEventListener("click", handleOutsideClick, { capture: true });
+            document.addEventListener("click", handleOutsideClick, {
+                capture: true,
+            });
         }, 0);
     }
 
     function closePopup() {
         document.getElementById(POPUP_ID)?.classList.remove("ytsp-open");
-        document.removeEventListener("click", handleOutsideClick, { capture: true });
+        document.removeEventListener("click", handleOutsideClick, {
+            capture: true,
+        });
     }
 
     function togglePopup() {
@@ -215,7 +223,9 @@
         const badge = document.querySelector("#" + TRIGGER_ID + " .ytsp-badge");
         if (badge) badge.textContent = fmt(currentSpeed);
 
-        const display = document.querySelector("#" + POPUP_ID + " .ytsp-display");
+        const display = document.querySelector(
+            "#" + POPUP_ID + " .ytsp-display",
+        );
         if (display) display.textContent = fmt(currentSpeed);
 
         const slider = document.querySelector("#" + POPUP_ID + " .ytsp-slider");
@@ -224,9 +234,14 @@
             updateSliderFill(slider);
         }
 
-        document.querySelectorAll("#" + POPUP_ID + " .ytsp-preset").forEach((btn) => {
-            btn.classList.toggle("ytsp-active", parseFloat(btn.dataset.speed) === currentSpeed);
-        });
+        document
+            .querySelectorAll("#" + POPUP_ID + " .ytsp-preset")
+            .forEach((btn) => {
+                btn.classList.toggle(
+                    "ytsp-active",
+                    parseFloat(btn.dataset.speed) === currentSpeed,
+                );
+            });
     }
 
     // ─── Inject / remove ───────────────────────────────────────────────────────
