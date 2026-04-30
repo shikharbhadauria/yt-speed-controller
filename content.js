@@ -5,6 +5,30 @@
     const PRESETS = [0.5, 1, 1.25, 1.5, 2, 3];
     const NUDGE = 0.25;
     const SLIDER_STEP = 0.05;
+    const SLIDER_MIN = 0.25;
+    const SLIDER_MAX = 16;
+
+    // ─── Log-scale helpers ─────────────────────────────────────────────────────
+    // Map speed → 0-1000 integer for the range input
+    function speedToSlider(speed) {
+        const clamped = Math.max(SLIDER_MIN, Math.min(SLIDER_MAX, speed));
+        return Math.round(
+            ((Math.log(clamped) - Math.log(SLIDER_MIN)) /
+                (Math.log(SLIDER_MAX) - Math.log(SLIDER_MIN))) *
+                1000,
+        );
+    }
+
+    // Map 0-1000 integer back to speed
+    function sliderToSpeed(value) {
+        return parseFloat(
+            Math.exp(
+                Math.log(SLIDER_MIN) +
+                    (value / 1000) *
+                        (Math.log(SLIDER_MAX) - Math.log(SLIDER_MIN)),
+            ).toFixed(2),
+        );
+    }
     const TRIGGER_ID = "ytsp-trigger";
     const POPUP_ID = "ytsp-popup";
 
@@ -114,16 +138,16 @@
             "ytp-input-slider ytp-speedslider ytp-varispeed-input-slider";
         slider.type = "range";
         slider.setAttribute("role", "slider");
-        slider.min = "0.25";
-        slider.max = "4";
-        slider.step = String(SLIDER_STEP);
-        slider.value = String(Math.min(4, Math.max(0.25, currentSpeed)));
-        slider.setAttribute("aria-valuemin", "0.25");
-        slider.setAttribute("aria-valuemax", "4");
+        slider.min = "0";
+        slider.max = "1000";
+        slider.step = "1";
+        slider.value = String(speedToSlider(currentSpeed));
+        slider.setAttribute("aria-valuemin", String(SLIDER_MIN));
+        slider.setAttribute("aria-valuemax", String(SLIDER_MAX));
         slider.setAttribute("aria-valuenow", String(currentSpeed));
         slider.addEventListener("input", (e) => {
             e.stopPropagation();
-            setSpeed(parseFloat(e.target.value));
+            setSpeed(sliderToSpeed(parseFloat(e.target.value)));
         });
 
         sliderSection.appendChild(slider);
@@ -188,16 +212,8 @@
 
     // ─── Slider fill ───────────────────────────────────────────────────────────
     function updateSliderFill(slider) {
-        const min = parseFloat(slider.min);
-        const max = parseFloat(slider.max);
-        const pct =
-            ((Math.min(max, Math.max(min, currentSpeed)) - min) / (max - min)) *
-            100;
-        // YouTube reads --yt-slider-shape-gradient-percent to drive the fill gradient
-        slider.style.setProperty(
-            "--yt-slider-shape-gradient-percent",
-            pct + "%",
-        );
+        const pct = speedToSlider(currentSpeed) / 10; // 0-1000 → 0-100%
+        slider.style.setProperty("--yt-slider-shape-gradient-percent", pct + "%");
     }
 
     // ─── Popup open / close ────────────────────────────────────────────────────
@@ -259,7 +275,7 @@
             "#" + POPUP_ID + " .ytp-speedslider",
         );
         if (slider) {
-            slider.value = String(Math.min(4, Math.max(0.25, currentSpeed)));
+            slider.value = String(speedToSlider(currentSpeed));
             slider.setAttribute("aria-valuenow", String(currentSpeed));
             updateSliderFill(slider);
         }
