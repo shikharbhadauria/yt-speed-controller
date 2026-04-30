@@ -1,113 +1,35 @@
-/* ── YT Speed+ Widget ─────────────────────────────────────────────────────── */
+/* ── YT Speed+ ─────────────────────────────────────────────────────────────── */
 
-#ytsp-widget {
-    display: inline-flex;
-    align-items: center;
-    position: relative;
-    height: 48px; /* matches YouTube's control bar height */
-    margin: 0 4px;
-    cursor: pointer;
-    z-index: 100;
-    /* Prevent text selection on rapid clicks */
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-/* ── Active speed label (always visible) ─────────────────────────────────── */
-.ytsp-label {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffffff;
-    font-family: "YouTube Sans", "Roboto", sans-serif;
+/* Speed label inside the trigger button */
+.ytsp-badge {
     font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    min-width: 36px;
-    height: 28px;
-    padding: 0 6px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease;
-    white-space: nowrap;
-}
-
-#ytsp-widget:hover .ytsp-label {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* ── Dropdown buttons panel (shown on hover) ──────────────────────────────── */
-.ytsp-buttons {
-    display: none;
-    position: absolute;
-    bottom: 52px; /* sit just above the control bar */
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(28, 28, 28, 0.97);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 6px;
-    gap: 4px;
-    flex-direction: column;
-    min-width: 72px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-    /* Animation */
-    opacity: 0;
-    transform: translateX(-50%) translateY(6px);
-    transition:
-        opacity 0.15s ease,
-        transform 0.15s ease;
-    /* Prevent panel from catching clicks when hidden */
-    pointer-events: none;
-}
-
-#ytsp-widget:hover .ytsp-buttons {
-    display: flex;
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    pointer-events: auto;
-}
-
-/* ── Individual speed buttons ─────────────────────────────────────────────── */
-.ytsp-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 28px;
-    padding: 0 10px;
-    border: none;
-    border-radius: 5px;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.75);
-    font-family: "YouTube Sans", "Roboto", sans-serif;
-    font-size: 12.5px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    white-space: nowrap;
-    transition:
-        background 0.1s ease,
-        color 0.1s ease;
-    text-align: center;
-}
-
-.ytsp-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-}
-
-/* Highlight currently active speed */
-.ytsp-btn.active {
-    background: rgba(255, 0, 0, 0.85); /* YouTube red */
-    color: #ffffff;
     font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
 }
 
-.ytsp-btn.active:hover {
-    background: rgba(255, 40, 40, 0.95);
+/* Popup — fixed so no parent overflow can clip it */
+#ytsp-popup {
+    display: none;
+    position: fixed;
+    z-index: 2147483647;
+    background: rgba(28, 28, 28, 0.97);
+    border-radius: 12px;
+    padding: 6px 0;
+    min-width: 110px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+#ytsp-popup.ytsp-open {
+    display: block;
+}
+
+/* Checkmark on the active speed row */
+#ytsp-popup .ytp-menuitem[aria-checked="true"] .ytp-menuitem-content::after {
+    content: "";
+    display: block;
+    width: 18px;
+    height: 18px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
 }
