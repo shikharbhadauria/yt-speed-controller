@@ -2,7 +2,10 @@
     "use strict";
 
     // ─── Config ────────────────────────────────────────────────────────────────
-    const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4];
+    const SPEEDS = [
+        0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75,
+        4,
+    ];
     const NUDGE = 0.25;
     const TRIGGER_ID = "ytsp-trigger";
     const POPUP_ID = "ytsp-popup";
@@ -23,7 +26,7 @@
     }
 
     function formatSpeed(s) {
-        return s + "×";
+        return s + "x";
     }
 
     // ─── Speed control ─────────────────────────────────────────────────────────
@@ -82,13 +85,9 @@
 
             const label = document.createElement("div");
             label.className = "ytp-menuitem-label";
-            label.textContent = formatSpeed(s);
-
-            const content = document.createElement("div");
-            content.className = "ytp-menuitem-content";
+            label.textContent = s;
 
             item.appendChild(label);
-            item.appendChild(content);
 
             item.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -111,18 +110,22 @@
 
         // Use viewport-relative fixed positioning so parent overflow can't clip us
         const r = trigger.getBoundingClientRect();
-        popup.style.bottom = window.innerHeight - r.top + 4 + "px";
+        popup.style.bottom = window.innerHeight - r.top + 16 + "px";
         popup.style.right = window.innerWidth - r.right + "px";
 
         popup.classList.add("ytsp-open");
         setTimeout(() => {
-            document.addEventListener("click", handleOutsideClick, { capture: true });
+            document.addEventListener("click", handleOutsideClick, {
+                capture: true,
+            });
         }, 0);
     }
 
     function closePopup() {
         document.getElementById(POPUP_ID)?.classList.remove("ytsp-open");
-        document.removeEventListener("click", handleOutsideClick, { capture: true });
+        document.removeEventListener("click", handleOutsideClick, {
+            capture: true,
+        });
     }
 
     function togglePopup() {
@@ -149,12 +152,14 @@
         const badge = document.querySelector("#" + TRIGGER_ID + " .ytsp-badge");
         if (badge) badge.textContent = formatSpeed(currentSpeed);
 
-        document.querySelectorAll("#" + POPUP_ID + " .ytp-menuitem").forEach((item) => {
-            item.setAttribute(
-                "aria-checked",
-                String(parseFloat(item.dataset.speed) === currentSpeed)
-            );
-        });
+        document
+            .querySelectorAll("#" + POPUP_ID + " .ytp-menuitem")
+            .forEach((item) => {
+                item.setAttribute(
+                    "aria-checked",
+                    String(parseFloat(item.dataset.speed) === currentSpeed),
+                );
+            });
     }
 
     // ─── Inject / remove ───────────────────────────────────────────────────────
