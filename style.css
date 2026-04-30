@@ -1,24 +1,138 @@
 /* ── YT Speed+ ─────────────────────────────────────────────────────────────── */
 
-/* Speed label inside the trigger button */
+/* ── Trigger button ─────────────────────────────────────────────────────────── */
+#ytsp-trigger {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
 .ytsp-badge {
     font-size: 14px;
     font-weight: 700;
     color: #fff;
     white-space: nowrap;
+    line-height: 1;
 }
 
-/* Popup — fixed so no parent overflow can clip it */
+/* ── Popup shell — YouTube's frosted glass desktop color + positioning ────────── */
 #ytsp-popup {
     display: none;
     position: fixed;
     z-index: 2147483647;
-    background: rgba(0, 0, 0, 0.6);
+    /* --yt-sys-color-baseline--frosted-glass-desktop */
+    background: rgba(15, 15, 15, 0.8);
     border-radius: 12px;
-    padding: 6px 0;
-    min-width: 110px;
+    overflow: hidden;
+    min-width: 260px;
 }
 
 #ytsp-popup.ytsp-open {
     display: block;
+}
+
+/* ── Our header (not in YouTube's structure) ────────────────────────────────── */
+.ytsp-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 16px 0;
+}
+
+.ytsp-title {
+    font-size: 15px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: "YouTube Sans", Roboto, sans-serif;
+}
+
+/* ── YouTube's panel content — let their stylesheet style it, just set padding ─ */
+#ytsp-popup .ytp-variable-speed-panel-content {
+    padding: 8px 16px 16px !important;
+    background: transparent !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+}
+
+/* ── Speed display — override size/weight if YouTube's CSS doesn't reach here ── */
+#ytsp-popup .ytp-variable-speed-panel-display {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 400;
+    color: #fff;
+    padding: 8px 0;
+}
+
+/* ── Slider container layout fallback ──────────────────────────────────────── */
+#ytsp-popup .ytp-variable-speed-panel-slider-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 4px 0 16px !important;
+}
+
+#ytsp-popup .ytp-input-slider-section {
+    flex: 1 !important;
+}
+
+/* ── Slider — use YouTube's CSS variable for fill; fallback gradient if needed ─ */
+#ytsp-popup .ytp-speedslider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    background: linear-gradient(
+        to right,
+        #f00 var(--yt-slider-shape-gradient-percent, 0%),
+        rgba(255, 255, 255, 0.25) var(--yt-slider-shape-gradient-percent, 0%)
+    ) !important;
+}
+
+#ytsp-popup .ytp-speedslider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Chips row layout fallback ─────────────────────────────────────────────── */
+#ytsp-popup .ytp-variable-speed-panel-chips {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+}
+
+#ytsp-popup .ytp-variable-speed-panel-chips::-webkit-scrollbar {
+    display: none;
+}
+
+#ytsp-popup .ytp-variable-speed-panel-preset-button-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+}
+
+/* "Normal" label below the 1.0 chip */
+#ytsp-popup .ytp-variable-speed-panel-preset-button-label-text {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    font-family: "YouTube Sans", Roboto, sans-serif;
+    white-space: nowrap;
+}
+
+/* Active preset highlight */
+#ytsp-popup .ytp-variable-speed-panel-preset-button.ytsp-active {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #fff !important;
 }

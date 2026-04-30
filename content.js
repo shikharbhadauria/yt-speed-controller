@@ -2,11 +2,9 @@
     "use strict";
 
     // ─── Config ────────────────────────────────────────────────────────────────
-    const SPEEDS = [
-        0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75,
-        4,
-    ];
+    const PRESETS = [0.5, 1, 1.25, 1.5, 2, 3];
     const NUDGE = 0.25;
+    const SLIDER_STEP = 0.05;
     const TRIGGER_ID = "ytsp-trigger";
     const POPUP_ID = "ytsp-popup";
 
@@ -25,8 +23,8 @@
         return document.querySelector(".ytp-right-controls");
     }
 
-    function formatSpeed(s) {
-        return s + "x";
+    function fmt(s) {
+        return s.toFixed(2) + "x";
     }
 
     // ─── Speed control ─────────────────────────────────────────────────────────
@@ -49,12 +47,12 @@
         const btn = document.createElement("button");
         btn.id = TRIGGER_ID;
         btn.className = "ytp-button";
-        btn.title = "Playback speed";
-        btn.setAttribute("aria-label", "Playback speed");
+        btn.title = "Playback Speed";
+        btn.setAttribute("aria-label", "Playback Speed");
 
         const badge = document.createElement("span");
         badge.className = "ytsp-badge";
-        badge.textContent = formatSpeed(currentSpeed);
+        badge.textContent = fmt(currentSpeed);
         btn.appendChild(badge);
 
         btn.addEventListener("click", (e) => {
@@ -66,40 +64,140 @@
     }
 
     function buildPopup() {
-        // No YouTube classes on the container — YouTube's JS hides/controls those.
-        // Appended to document.body with position:fixed so nothing clips it.
         const popup = document.createElement("div");
         popup.id = POPUP_ID;
 
-        const menu = document.createElement("div");
-        menu.className = "ytp-panel-menu";
-        menu.setAttribute("role", "menu");
+        // ── Our header (not in YouTube's DOM — needed for standalone popup)
+        const header = document.createElement("div");
+        header.className = "ytsp-header";
 
-        SPEEDS.forEach((s) => {
-            const item = document.createElement("div");
-            item.className = "ytp-menuitem";
-            item.setAttribute("role", "menuitemradio");
-            item.setAttribute("aria-checked", String(s === currentSpeed));
-            item.dataset.speed = s;
-            item.tabIndex = 0;
+        const title = document.createElement("span");
+        title.className = "ytsp-title";
+        title.textContent = "Playback Speed";
 
-            const label = document.createElement("div");
-            label.className = "ytp-menuitem-label";
-            label.textContent = s;
+        header.appendChild(title);
 
-            item.appendChild(label);
+        // ── YouTube's exact panel structure — styled by YouTube's own stylesheet
+        const content = document.createElement("div");
+        content.className = "ytp-variable-speed-panel-content";
 
-            item.addEventListener("click", (e) => {
-                e.stopPropagation();
-                setSpeed(s);
-                closePopup();
-            });
+        // Speed display
+        const displayContainer = document.createElement("div");
+        displayContainer.className = "ytp-speed-display-container";
+        const displayInner = document.createElement("div");
+        displayInner.className = "ytp-variable-speed-panel-display";
+        displayInner.setAttribute("aria-live", "polite");
+        const displaySpan = document.createElement("span");
+        displaySpan.textContent = fmt(currentSpeed);
+        displayInner.appendChild(displaySpan);
+        displayContainer.appendChild(displayInner);
 
-            menu.appendChild(item);
+        // Slider container
+        const sliderContainer = document.createElement("div");
+        sliderContainer.className = "ytp-variable-speed-panel-slider-container";
+
+        const minusBtn = document.createElement("button");
+        minusBtn.className =
+            "ytp-button ytp-variable-speed-panel-button ytp-variable-speed-panel-increment-button";
+        minusBtn.setAttribute("aria-label", "Decrease playback speed 0.05");
+        minusBtn.innerHTML = "<span>-</span>";
+        minusBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setSpeed(currentSpeed - SLIDER_STEP);
         });
 
-        popup.appendChild(menu);
+        const sliderSection = document.createElement("div");
+        sliderSection.className = "ytp-input-slider-section";
+
+        const slider = document.createElement("input");
+        slider.className =
+            "ytp-input-slider ytp-speedslider ytp-varispeed-input-slider";
+        slider.type = "range";
+        slider.setAttribute("role", "slider");
+        slider.min = "0.25";
+        slider.max = "4";
+        slider.step = String(SLIDER_STEP);
+        slider.value = String(Math.min(4, Math.max(0.25, currentSpeed)));
+        slider.setAttribute("aria-valuemin", "0.25");
+        slider.setAttribute("aria-valuemax", "4");
+        slider.setAttribute("aria-valuenow", String(currentSpeed));
+        slider.addEventListener("input", (e) => {
+            e.stopPropagation();
+            setSpeed(parseFloat(e.target.value));
+        });
+
+        sliderSection.appendChild(slider);
+
+        const plusBtn = document.createElement("button");
+        plusBtn.className =
+            "ytp-button ytp-variable-speed-panel-button ytp-variable-speed-panel-increment-button";
+        plusBtn.setAttribute("aria-label", "Increase playback speed 0.05");
+        plusBtn.innerHTML = "<span>+</span>";
+        plusBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setSpeed(currentSpeed + SLIDER_STEP);
+        });
+
+        sliderContainer.appendChild(minusBtn);
+        sliderContainer.appendChild(sliderSection);
+        sliderContainer.appendChild(plusBtn);
+
+        // Chips (presets) — matches ytp-variable-speed-panel-chips structure
+        const chips = document.createElement("div");
+        chips.className = "ytp-variable-speed-panel-chips";
+
+        PRESETS.forEach((s) => {
+            const wrapper = document.createElement("div");
+            wrapper.className =
+                "ytp-variable-speed-panel-preset-button-wrapper";
+
+            const btn = document.createElement("button");
+            btn.className =
+                "ytp-button ytp-variable-speed-panel-preset-button ytp-variable-speed-panel-button" +
+                (s === currentSpeed ? " ytsp-active" : "");
+            btn.dataset.speed = s;
+            const span = document.createElement("span");
+            span.textContent = s === 1 ? "1.0" : String(s);
+            btn.appendChild(span);
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                setSpeed(s);
+            });
+
+            wrapper.appendChild(btn);
+
+            if (s === 1) {
+                const label = document.createElement("div");
+                label.className =
+                    "ytp-variable-speed-panel-preset-button-label-text";
+                label.textContent = "Normal";
+                wrapper.appendChild(label);
+            }
+
+            chips.appendChild(wrapper);
+        });
+
+        content.appendChild(displayContainer);
+        content.appendChild(sliderContainer);
+        content.appendChild(chips);
+
+        popup.appendChild(header);
+        popup.appendChild(content);
         return popup;
+    }
+
+    // ─── Slider fill ───────────────────────────────────────────────────────────
+    function updateSliderFill(slider) {
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const pct =
+            ((Math.min(max, Math.max(min, currentSpeed)) - min) / (max - min)) *
+            100;
+        // YouTube reads --yt-slider-shape-gradient-percent to drive the fill gradient
+        slider.style.setProperty(
+            "--yt-slider-shape-gradient-percent",
+            pct + "%",
+        );
     }
 
     // ─── Popup open / close ────────────────────────────────────────────────────
@@ -108,12 +206,16 @@
         const trigger = document.getElementById(TRIGGER_ID);
         if (!popup || !trigger) return;
 
-        // Use viewport-relative fixed positioning so parent overflow can't clip us
         const r = trigger.getBoundingClientRect();
         popup.style.bottom = window.innerHeight - r.top + 16 + "px";
         popup.style.right = window.innerWidth - r.right + "px";
 
         popup.classList.add("ytsp-open");
+
+        // Sync slider fill on open
+        const slider = popup.querySelector(".ytp-speedslider");
+        if (slider) updateSliderFill(slider);
+
         setTimeout(() => {
             document.addEventListener("click", handleOutsideClick, {
                 capture: true,
@@ -131,11 +233,7 @@
     function togglePopup() {
         const popup = document.getElementById(POPUP_ID);
         if (!popup) return;
-        if (popup.classList.contains("ytsp-open")) {
-            closePopup();
-        } else {
-            openPopup();
-        }
+        popup.classList.contains("ytsp-open") ? closePopup() : openPopup();
     }
 
     function handleOutsideClick(e) {
@@ -150,14 +248,30 @@
     // ─── Refresh ───────────────────────────────────────────────────────────────
     function refreshWidget() {
         const badge = document.querySelector("#" + TRIGGER_ID + " .ytsp-badge");
-        if (badge) badge.textContent = formatSpeed(currentSpeed);
+        if (badge) badge.textContent = fmt(currentSpeed);
+
+        const display = document.querySelector(
+            "#" + POPUP_ID + " .ytp-variable-speed-panel-display span",
+        );
+        if (display) display.textContent = fmt(currentSpeed);
+
+        const slider = document.querySelector(
+            "#" + POPUP_ID + " .ytp-speedslider",
+        );
+        if (slider) {
+            slider.value = String(Math.min(4, Math.max(0.25, currentSpeed)));
+            slider.setAttribute("aria-valuenow", String(currentSpeed));
+            updateSliderFill(slider);
+        }
 
         document
-            .querySelectorAll("#" + POPUP_ID + " .ytp-menuitem")
-            .forEach((item) => {
-                item.setAttribute(
-                    "aria-checked",
-                    String(parseFloat(item.dataset.speed) === currentSpeed),
+            .querySelectorAll(
+                "#" + POPUP_ID + " .ytp-variable-speed-panel-preset-button",
+            )
+            .forEach((btn) => {
+                btn.classList.toggle(
+                    "ytsp-active",
+                    parseFloat(btn.dataset.speed) === currentSpeed,
                 );
             });
     }
@@ -173,7 +287,7 @@
         if (video) currentSpeed = video.playbackRate || 1;
 
         rightControls.insertBefore(buildTrigger(), rightControls.firstChild);
-        document.body.appendChild(buildPopup()); // body, not player
+        document.body.appendChild(buildPopup());
 
         if (video) {
             video.addEventListener("ratechange", () => {
