@@ -3,12 +3,13 @@ import zlib
 import math
 import os
 
+# ── PNG writer ────────────────────────────────────────────────────────────────
+
 def write_png(filename, width, height, pixels):
     def chunk(name, data):
         c = name + data
         return struct.pack(">I", len(data)) + c + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
 
-    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     raw = b""
     for y in range(height):
         raw += b"\x00"
@@ -16,7 +17,6 @@ def write_png(filename, width, height, pixels):
             r, g, b, a = pixels[y][x]
             raw += bytes([r, g, b, a])
 
-    # Re-encode as RGB with alpha by using RGBA color type (2 = RGB, 6 = RGBA)
     ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
     compressed = zlib.compress(raw, 9)
 
@@ -26,117 +26,123 @@ def write_png(filename, width, height, pixels):
         f.write(chunk(b"IDAT", compressed))
         f.write(chunk(b"IEND", b""))
 
+# ── SDF helpers ───────────────────────────────────────────────────────────────
 
-def lerp(a, b, t):
-    return a + (b - a) * t
+def rounded_rect_sdf(px, py, cx, cy, size, radius):
+    qx = abs(px - cx) - (size / 2.0 - radius)
+    qy = abs(py - cy) - (size / 2.0 - radius)
+    return math.sqrt(max(qx, 0) ** 2 + max(qy, 0) ** 2) + min(max(qx, qy), 0) - radius
 
+def capsule_sdf(px, py, x1, x2, yc, r):
+    """Horizontal capsule (pill shape) signed distance."""
+    cx_seg = max(x1 + r, min(x2 - r, px))
+    dx, dy = px - cx_seg, py - yc
+    return math.sqrt(dx * dx + dy * dy) - r
 
-def blend(bg, fg_color, alpha):
-    r = int(lerp(bg[0], fg_color[0], alpha))
-    g = int(lerp(bg[1], fg_color[1], alpha))
-    b = int(lerp(bg[2], fg_color[2], alpha))
-    a = min(255, bg[3] + int(alpha * (255 - bg[3])))
-    return (r, g, b, a)
+def triangle_sdf(px, py, vx, vy):
+    def edge_dist(ax, ay, bx, by):
+        ex, ey = bx - ax, by - ay
+        wx, wy = px - ax, py - ay
+        t = max(0.0, min(1.0, (wx * ex + wy * ey) / (ex * ex + ey * ey)))
+        dx, dy = wx - t * ex, wy - t * ey
+        return math.sqrt(dx * dx + dy * dy)
 
+    def sign(ax, ay, bx, by):
+        return (px - bx) * (ay - by) - (ax - bx) * (py - by)
+
+    d = min(
+        edge_dist(vx[0], vy[0], vx[1], vy[1]),
+        edge_dist(vx[1], vy[1], vx[2], vy[2]),
+        edge_dist(vx[2], vy[2], vx[0], vy[0]),
+    )
+    d1 = sign(vx[0], vy[0], vx[1], vy[1])
+    d2 = sign(vx[1], vy[1], vx[2], vy[2])
+    d3 = sign(vx[2], vy[2], vx[0], vy[0])
+    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+    inside = not (has_neg and has_pos)
+    return -d if inside else d
+
+def sdf_to_alpha(d, aa=1.0):
+    return max(0.0, min(1.0, -d / aa + 0.5))
+
+def blend(pixel, color, alpha):
+    r = int(pixel[0] * (1 - alpha) + color[0] * alpha)
+    g = int(pixel[1] * (1 - alpha) + color[1] * alpha)
+    b = int(pixel[2] * (1 - alpha) + color[2] * alpha)
+    return (r, g, b, pixel[3])
+
+# ── Icon design ───────────────────────────────────────────────────────────────
+#
+#  Dark rounded square background
+#  Three horizontal speed-streak lines (white, fading left → right) on the left
+#  Bold red play triangle on the right
+#  Together they read as "fast playback / motion"
 
 def make_icon(size):
     pixels = [[(0, 0, 0, 0)] * size for _ in range(size)]
 
-    bg_r, bg_g, bg_b = 15, 15, 15   # #0F0F0F
-    tri_r, tri_g, tri_b = 255, 32, 32  # #FF2020
+    BG    = (15, 15, 15)        # #0F0F0F
+    RED   = (255, 45, 45)       # play triangle
+    WHITE = (255, 255, 255)     # speed streaks
 
-    radius = size * 0.22  # corner radius as fraction of size
-    cx, cy = size / 2, size / 2
+    cx, cy = size / 2.0, size / 2.0
+    radius = size * 0.21
+    aa = 1.0
 
-    # Rounded rect signed distance
-    def rounded_rect_dist(px, py):
-        qx = abs(px - cx) - (size / 2 - radius)
-        qy = abs(py - cy) - (size / 2 - radius)
-        return (
-            math.sqrt(max(qx, 0) ** 2 + max(qy, 0) ** 2)
-            + min(max(qx, qy), 0)
-            - radius
-        )
+    # ── Play triangle — shifted right of center ───────────────────────────────
+    s = size * 0.27                       # scale factor
+    tx = cx + size * 0.11                 # horizontal anchor (right of center)
+    vx = [tx + s * 0.75, tx - s * 0.52, tx - s * 0.52]
+    vy = [cy,             cy - s * 0.88,  cy + s * 0.88]
 
-    # Play triangle: centered, pointing right
-    # Vertices relative to center
-    scale = size * 0.28
-    vx = [
-        cx + scale * 0.7,          # right tip
-        cx - scale * 0.55,         # top-left
-        cx - scale * 0.55,         # bottom-left
+    # ── Speed streaks — three horizontal capsules, left of triangle ───────────
+    # (x_start, x_end, y_offset_from_cy, half_height, opacity)
+    gap   = size * 0.145
+    lx0   = size * 0.09                   # left edge of lines
+    lx1_s = tx - s * 0.65                 # right edge — just touches triangle left edge
+    lh    = size * 0.065                  # capsule radius
+
+    streaks = [
+        (lx0, lx1_s * 0.84, cy - gap, lh, 0.40),   # top    — shorter, dimmer
+        (lx0, lx1_s,         cy,       lh, 0.65),   # middle — longest, brightest
+        (lx0, lx1_s * 0.84, cy + gap, lh, 0.40),   # bottom — shorter, dimmer
     ]
-    vy = [
-        cy,                         # right tip
-        cy - scale * 0.85,          # top-left
-        cy + scale * 0.85,          # bottom-left
-    ]
-
-    # Shift triangle slightly right for optical balance
-    offset_x = size * 0.03
-    vx = [v + offset_x for v in vx]
-
-    def point_in_triangle(px, py, ax, ay, bx, by, ccx, ccy):
-        def sign(p1x, p1y, p2x, p2y, p3x, p3y):
-            return (p1x - p3x) * (p2y - p3y) - (p2x - p3x) * (p1y - p3y)
-        d1 = sign(px, py, ax, ay, bx, by)
-        d2 = sign(px, py, bx, by, ccx, ccy)
-        d3 = sign(px, py, ccx, ccy, ax, ay)
-        has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
-        has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
-        return not (has_neg and has_pos)
-
-    def triangle_sdf(px, py):
-        # Signed distance to triangle (negative = inside)
-        def edge_dist(ax, ay, bx, by, px, py):
-            ex, ey = bx - ax, by - ay
-            wx, wy = px - ax, py - ay
-            t = max(0.0, min(1.0, (wx * ex + wy * ey) / (ex * ex + ey * ey)))
-            dx, dy = wx - t * ex, wy - t * ey
-            return math.sqrt(dx * dx + dy * dy)
-
-        d = min(
-            edge_dist(vx[0], vy[0], vx[1], vy[1], px, py),
-            edge_dist(vx[1], vy[1], vx[2], vy[2], px, py),
-            edge_dist(vx[2], vy[2], vx[0], vy[0], px, py),
-        )
-        inside = point_in_triangle(px, py, vx[0], vy[0], vx[1], vy[1], vx[2], vy[2])
-        return -d if inside else d
-
-    aa = 1.0  # anti-alias radius in pixels
 
     for y in range(size):
         for x in range(size):
             px, py = x + 0.5, y + 0.5
 
-            # Background rounded rect coverage
-            bg_d = rounded_rect_dist(px, py)
-            bg_alpha = max(0.0, min(1.0, -bg_d / aa + 0.5))
-
-            if bg_alpha <= 0:
-                pixels[y][x] = (0, 0, 0, 0)
+            bg_d = rounded_rect_sdf(px, py, cx, cy, size, radius)
+            bg_a = sdf_to_alpha(bg_d, aa)
+            if bg_a <= 0:
                 continue
 
-            # Background pixel
-            pixel = (bg_r, bg_g, bg_b, int(bg_alpha * 255))
+            pixel = (BG[0], BG[1], BG[2], int(bg_a * 255))
 
-            # Triangle coverage
-            tri_d = triangle_sdf(px, py)
-            tri_alpha = max(0.0, min(1.0, -tri_d / aa + 0.5))
+            # Speed streaks (behind triangle)
+            for x1, x2, yc, r, opacity in streaks:
+                d = capsule_sdf(px, py, x1, x2, yc, r)
+                a = sdf_to_alpha(d, aa) * opacity * bg_a
+                if a > 0:
+                    pixel = blend(pixel, WHITE, a)
 
-            if tri_alpha > 0:
-                pixel = blend(pixel, (tri_r, tri_g, tri_b), tri_alpha * bg_alpha)
+            # Play triangle (on top)
+            td = triangle_sdf(px, py, vx, vy)
+            ta = sdf_to_alpha(td, aa) * bg_a
+            if ta > 0:
+                pixel = blend(pixel, RED, ta)
 
             pixels[y][x] = pixel
 
     return pixels
 
+# ── Generate ──────────────────────────────────────────────────────────────────
 
 os.makedirs("icons", exist_ok=True)
 
-for size, name in [(16, "icons/icon16.png"), (48, "icons/icon48.png"), (128, "icons/icon128.png")]:
-    pixels = make_icon(size)
-    write_png(name, size, size, pixels)
-    print(f"Generated {name} ({size}x{size})")
+for size, path in [(16, "icons/icon16.png"), (48, "icons/icon48.png"), (128, "icons/icon128.png")]:
+    write_png(path, size, size, make_icon(size))
+    print(f"Generated {path} ({size}x{size})")
 
 print("Done.")
