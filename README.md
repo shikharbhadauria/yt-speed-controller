@@ -21,6 +21,18 @@ A Chrome extension that adds a fine-grained playback speed controller directly i
 
 ---
 
+## Screenshots
+
+| Default (1.00x) | Full speed (16.00x) |
+|---|---|
+| ![Speed panel at 1x](screenshots/screenshot-01.jpg) | ![Speed panel at 16x](screenshots/screenshot-02.jpg) |
+
+| Custom speed (2.57x) | Keyboard shortcuts |
+|---|---|
+| ![Speed panel at 2.57x](screenshots/screenshot-03.jpg) | ![Keyboard shortcuts](screenshots/screenshot-04.jpg) |
+
+---
+
 ## Installation (Development)
 
 1. Clone or download this repository
