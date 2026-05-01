@@ -43,7 +43,7 @@
     font-size: 15px;
     font-weight: 400;
     color: rgba(255, 255, 255, 0.85);
-    font-family: "YouTube Sans", Roboto, sans-serif;
+    font-family: Roboto, Arial, sans-serif;
 }
 
 /* ── YouTube's panel content — let their stylesheet style it, just set padding ─ */
@@ -127,7 +127,7 @@
 #ytsp-popup .ytp-variable-speed-panel-preset-button-label-text {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.55);
-    font-family: "YouTube Sans", Roboto, sans-serif;
+    font-family: Roboto, Arial, sans-serif;
     white-space: nowrap;
 }
 
@@ -135,4 +135,30 @@
 #ytsp-popup .ytp-variable-speed-panel-preset-button.ytsp-active {
     background: rgba(255, 255, 255, 0.25) !important;
     color: #fff !important;
+}
+
+/* ── Speed toast — shown briefly on keyboard shortcut ──────────────────────── */
+#ytsp-toast {
+    position: fixed;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 20px;
+    font-weight: 300;
+    font-family: Roboto, Arial, sans-serif;
+    padding: 10px 22px;
+    border-radius: 6px;
+    pointer-events: none;
+    z-index: 2147483646;
+    opacity: 0;
+    transition: opacity 0.08s ease;
+}
+
+#ytsp-toast.ytsp-toast-in {
+    opacity: 1;
+}
+
+#ytsp-toast.ytsp-toast-out {
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }

@@ -317,6 +317,37 @@
         closePopup();
         document.getElementById(TRIGGER_ID)?.remove();
         document.getElementById(POPUP_ID)?.remove();
+        document.getElementById(TOAST_ID)?.remove();
+    }
+
+    // ─── Speed toast ───────────────────────────────────────────────────────────
+    const TOAST_ID = "ytsp-toast";
+    let toastTimer = null;
+
+    function showSpeedToast() {
+        let toast = document.getElementById(TOAST_ID);
+        if (!toast) {
+            toast = document.createElement("div");
+            toast.id = TOAST_ID;
+            document.body.appendChild(toast);
+        }
+
+        const video = getVideo();
+        if (video) {
+            const r = video.getBoundingClientRect();
+            toast.style.left = r.left + r.width / 2 + "px";
+            toast.style.top = r.top + r.height * 0.15 + "px";
+        }
+
+        toast.textContent = fmt(currentSpeed);
+        toast.classList.remove("ytsp-toast-out");
+        toast.classList.add("ytsp-toast-in");
+
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+            toast.classList.remove("ytsp-toast-in");
+            toast.classList.add("ytsp-toast-out");
+        }, 1200);
     }
 
     // ─── Keyboard shortcuts ────────────────────────────────────────────────────
@@ -335,12 +366,15 @@
             if (e.key === ">" || e.key === "]") {
                 e.preventDefault();
                 nudgeSpeed(+NUDGE);
+                showSpeedToast();
             } else if (e.key === "<" || e.key === "[") {
                 e.preventDefault();
                 nudgeSpeed(-NUDGE);
+                showSpeedToast();
             } else if (e.key === "\\") {
                 e.preventDefault();
                 setSpeed(1);
+                showSpeedToast();
             }
         },
         true,
