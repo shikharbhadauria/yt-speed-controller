@@ -1,5 +1,9 @@
 # YT Playback Speed Controller
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/iibhdnmldcnmkdcjfplglhafohbjjnog)](https://chromewebstore.google.com/detail/yt-playback-speed-control/iibhdnmldcnmkdcjfplglhafohbjjnog)
+[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/iibhdnmldcnmkdcjfplglhafohbjjnog)](https://chromewebstore.google.com/detail/yt-playback-speed-control/iibhdnmldcnmkdcjfplglhafohbjjnog)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A Chrome extension that adds a fine-grained playback speed controller directly into YouTube's player bar — no settings menus, no page reloads.
 
 ---
@@ -16,6 +20,7 @@ A Chrome extension that adds a fine-grained playback speed controller directly i
   - `]` or `>` — speed up 0.25x
   - `[` or `<` — slow down 0.25x
   - `\` — reset to 1.0x
+- **On-screen speed toast** — brief overlay on the video confirms the new speed on every shortcut press
 - Stays in sync with YouTube's own speed menu (`ratechange` event)
 - Survives YouTube's SPA navigation (re-injects on every page transition)
 
@@ -100,7 +105,9 @@ Shortcuts are suppressed when focus is in an `<input>`, `<textarea>`, or `conten
 
 ## Chrome Web Store
 
-> Coming soon.
+Install directly from the Chrome Web Store — no developer mode needed:
+
+**[→ YT Playback Speed Controller](https://chromewebstore.google.com/detail/yt-playback-speed-control/iibhdnmldcnmkdcjfplglhafohbjjnog)**
 
 ---
 
