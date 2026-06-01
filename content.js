@@ -31,6 +31,7 @@
     }
     const TRIGGER_ID = "ytsp-trigger";
     const POPUP_ID = "ytsp-popup";
+    const STORAGE_KEY = "ytsp-speed";
 
     // ─── State ─────────────────────────────────────────────────────────────────
     let currentSpeed = 1;
@@ -58,6 +59,7 @@
         if (video) {
             video.playbackRate = speed;
             currentSpeed = speed;
+            localStorage.setItem(STORAGE_KEY, speed);
             refreshWidget();
         }
     }
@@ -300,7 +302,16 @@
         if (!rightControls) return;
 
         const video = getVideo();
-        if (video) currentSpeed = video.playbackRate || 1;
+        const saved = parseFloat(localStorage.getItem(STORAGE_KEY));
+
+        if (video) {
+            if (!isNaN(saved)) {
+                video.playbackRate = saved;
+                currentSpeed = saved;
+            } else {
+                currentSpeed = video.playbackRate || 1;
+            }
+        }
 
         rightControls.insertBefore(buildTrigger(), rightControls.firstChild);
         document.body.appendChild(buildPopup());
@@ -308,6 +319,7 @@
         if (video) {
             video.addEventListener("ratechange", () => {
                 currentSpeed = video.playbackRate;
+                localStorage.setItem(STORAGE_KEY, currentSpeed);
                 refreshWidget();
             });
         }
